@@ -13,6 +13,10 @@ export const StudentsManagement = () => {
     department: "",
     year: "",
   });
+  const [filters, setFilters] = useState({
+    department: "",
+    year: "",
+  });
   const [errors, setErrors] = useState({});
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
@@ -22,15 +26,23 @@ export const StudentsManagement = () => {
   const [errorMessage, setErrorMessage] = useState("");
   const token = localStorage.getItem("token");
 
+  // Predefined options for department and year
+  const departmentOptions = ["IT"];
+  const yearOptions = [2, 3, 4];
+
   useEffect(() => {
     fetchStudents();
-  }, []);
+  }, []); // Fetch students on initial load
 
   const fetchStudents = async () => {
     setIsLoading(true);
     try {
       const response = await axios.get(`${API_URL}/api/v1/admin/student`, {
         headers: { Authorization: `Bearer ${token}` },
+        params: {
+          department: filters.department,
+          year: filters.year,
+        },
       });
       setStudents(response.data.data);
     } catch (error) {
@@ -39,6 +51,14 @@ export const StudentsManagement = () => {
     } finally {
       setIsLoading(false);
     }
+  };
+
+  const handleFilterChange = (e, key) => {
+    setFilters({ ...filters, [key]: e.target.value });
+  };
+
+  const handleFilterSubmit = () => {
+    fetchStudents(); // Call API with updated filters
   };
 
   const validate = () => {
@@ -122,6 +142,42 @@ export const StudentsManagement = () => {
           {errorMessage}
         </div>
       )}
+
+      {/* Filter Inputs */}
+      <div className="flex space-x-4 mb-6">
+        <select
+          value={filters.department}
+          onChange={(e) => handleFilterChange(e, "department")}
+          className="p-2 border rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
+        >
+          <option value="">Select Department</option>
+          {departmentOptions.map((dept) => (
+            <option key={dept} value={dept}>
+              {dept}
+            </option>
+          ))}
+        </select>
+        <select
+          value={filters.year}
+          onChange={(e) => handleFilterChange(e, "year")}
+          className="p-2 border rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
+        >
+          <option value="">Select Year</option>
+          {yearOptions.map((year) => (
+            <option key={year} value={year}>
+              {year}
+            </option>
+          ))}
+        </select>
+        <button
+          onClick={handleFilterSubmit}
+          disabled={isLoading}
+          className="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded shadow transition duration-300 disabled:bg-gray-400 disabled:cursor-not-allowed"
+        >
+          {isLoading ? "Applying Filters..." : "Apply Filters"}
+        </button>
+      </div>
+
       <button
         onClick={() => {
           setNewStudent({
@@ -250,7 +306,11 @@ export const StudentsManagement = () => {
                 className="w-full border p-2 mb-2 rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
               >
                 <option value="">Select Department</option>
-                <option value="IT">IT</option>
+                {departmentOptions.map((dept) => (
+                  <option key={dept} value={dept}>
+                    {dept}
+                  </option>
+                ))}
               </select>
 
               <select
@@ -261,9 +321,11 @@ export const StudentsManagement = () => {
                 className="w-full border p-2 mb-2 rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
               >
                 <option value="">Select Year</option>
-                <option value="2">2</option>
-                <option value="3">3</option>
-                <option value="4">4</option>
+                {yearOptions.map((year) => (
+                  <option key={year} value={year}>
+                    {year}
+                  </option>
+                ))}
               </select>
 
               <button

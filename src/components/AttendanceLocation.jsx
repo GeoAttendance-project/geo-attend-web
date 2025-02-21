@@ -53,15 +53,19 @@ export const AttendanceLocation = () => {
       year: form.year,
       geoLocation: {
         type: "Point",
-        coordinates: [parseFloat(form.longitude), parseFloat(form.latitude)],
+        coordinates: [Number(form.latitude), Number(form.longitude)],
       },
     };
 
     if (editMode) {
       axios
-        .put(`${API_URL}/api/v1/admin/attendance-location/${selectedLocation._id}`, locationData, {
-          headers: { Authorization: `Bearer ${token}` },
-        })
+        .put(
+          `${API_URL}/api/v1/admin/attendance-location/${selectedLocation._id}`,
+          locationData,
+          {
+            headers: { Authorization: `Bearer ${token}` },
+          }
+        )
         .then(() => {
           setLocations(
             locations.map((loc) =>
@@ -79,7 +83,7 @@ export const AttendanceLocation = () => {
           headers: { Authorization: `Bearer ${token}` },
         })
         .then((res) => {
-          setLocations([...locations, res.data]);
+          setLocations([...locations, res.data.data]);
           setModalOpen(false);
         })
         .catch((err) => console.error("Error adding location:", err));
@@ -118,8 +122,8 @@ export const AttendanceLocation = () => {
             <tr className="bg-gray-100">
               <th className="p-4">Department</th>
               <th className="p-4">Year</th>
-              <th className="p-4">Latitude</th>
               <th className="p-4">Longitude</th>
+              <th className="p-4">Latitude</th>
               <th className="p-4">Actions</th>
             </tr>
           </thead>
@@ -128,8 +132,8 @@ export const AttendanceLocation = () => {
               <tr key={loc._id} className=" hover:bg-gray-50">
                 <td className="p-4">{loc.department}</td>
                 <td className="p-4">{loc.year}</td>
-                <td className="p-4">{loc.geoLocation.coordinates[1]}</td>
                 <td className="p-4">{loc.geoLocation.coordinates[0]}</td>
+                <td className="p-4">{loc.geoLocation.coordinates[1]}</td>
                 <td className="p-4 flex space-x-2">
                   <button
                     onClick={() => openLocationModal(loc)}

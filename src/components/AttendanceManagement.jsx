@@ -82,7 +82,6 @@ export const AttendanceManagement = () => {
               <thead>
                 <tr className="text-left border-b">
                   <th className="p-3 text-gray-600">Name</th>
-                  <th className="p-3 text-gray-600">Roll No</th>
                   <th className="p-3 text-gray-600">Department</th>
                   <th className="p-3 text-gray-600">Year</th>
                   <th className="p-3 text-gray-600">Status</th>
@@ -95,7 +94,6 @@ export const AttendanceManagement = () => {
                     className="hover:bg-gray-50 transition duration-200"
                   >
                     <td className="p-3 text-gray-700">{student.name}</td>
-                    <td className="p-3 text-gray-700">{student.rollNo}</td>
                     <td className="p-3 text-gray-700">{student.department}</td>
                     <td className="p-3 text-gray-700">{student.year}</td>
                     <td
