@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import axios from "axios";
 
-const API_URL = "http://localhost:3001/api/v1/admin";
+const API_URL = import.meta.env.VITE_API_URL;
 
 export const AdminManagement = () => {
   const [admins, setAdmins] = useState([]);
@@ -21,7 +21,7 @@ export const AdminManagement = () => {
     const fetchAdmins = async () => {
       try {
         setLoading(true);
-        const response = await axios.get(API_URL, {
+        const response = await axios.get(`${API_URL}/api/v1/admin`, {
           headers: { Authorization: `Bearer ${token}` },
         });
         setAdmins(response.data.data.admins);
