@@ -44,7 +44,7 @@ export const AdminManagement = () => {
     e.preventDefault();
     try {
       setLoading(true);
-      const response = await axios.post(API_URL, newAdmin, {
+      const response = await axios.post(`${API_URL}/api/v1/admin`, newAdmin, {
         headers: { Authorization: `Bearer ${token}` },
       });
       setAdmins([...admins, response.data]);
