@@ -14,8 +14,8 @@ export const StudentsManagement = () => {
     year: "",
   });
   const [filters, setFilters] = useState({
-    department: "",
-    year: "",
+    department: "IT",
+    year: "4",
   });
   const [errors, setErrors] = useState({});
   const [isModalOpen, setIsModalOpen] = useState(false);
