@@ -6,6 +6,7 @@ const API_URL = import.meta.env.VITE_API_URL;
 
 export const StudentsManagement = () => {
   const [students, setStudents] = useState([]);
+  const [filteredStudents, setFilteredStudents] = useState([]); // For search functionality
   const [newStudent, setNewStudent] = useState({
     name: "",
     email: "",
@@ -24,6 +25,7 @@ export const StudentsManagement = () => {
   const [studentToDelete, setStudentToDelete] = useState(null);
   const [isLoading, setIsLoading] = useState(false);
   const [errorMessage, setErrorMessage] = useState("");
+  const [searchQuery, setSearchQuery] = useState(""); // For search functionality
   const token = localStorage.getItem("token");
 
   // Predefined options for department and year
@@ -33,6 +35,16 @@ export const StudentsManagement = () => {
   useEffect(() => {
     fetchStudents();
   }, []); // Fetch students on initial load
+
+  useEffect(() => {
+    // Filter students based on search query
+    const filtered = students.filter(
+      (student) =>
+        student.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        student.examNo.toLowerCase().includes(searchQuery.toLowerCase())
+    );
+    setFilteredStudents(filtered);
+  }, [searchQuery, students]); // Update filteredStudents when searchQuery or students change
 
   const fetchStudents = async () => {
     setIsLoading(true);
@@ -45,6 +57,7 @@ export const StudentsManagement = () => {
         },
       });
       setStudents(response.data.data);
+      setFilteredStudents(response.data.data); // Initialize filteredStudents with all students
     } catch (error) {
       console.error("Error fetching students:", error);
       setErrorMessage("Failed to fetch students. Please try again.");
@@ -59,6 +72,10 @@ export const StudentsManagement = () => {
 
   const handleFilterSubmit = () => {
     fetchStudents(); // Call API with updated filters
+  };
+
+  const handleSearchChange = (e) => {
+    setSearchQuery(e.target.value); // Update search query
   };
 
   const validate = () => {
@@ -133,10 +150,8 @@ export const StudentsManagement = () => {
   };
 
   return (
-    <div className="p-5 max-w-5xl mx-auto">
-      <h2 className="text-2xl font-bold mb-6 text-gray-800">
-        Student Management
-      </h2>
+    <div className="p-6 bg-gray-50 min-h-screen">
+      <h2 className="text-3xl font-bold text-gray-800 mb-6">Student Management</h2>
       {errorMessage && (
         <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded mb-4">
           {errorMessage}
@@ -178,6 +193,17 @@ export const StudentsManagement = () => {
         </button>
       </div>
 
+      {/* Search Bar */}
+      <div className="mb-6">
+        <input
+          type="text"
+          placeholder="Search by name or exam number"
+          value={searchQuery}
+          onChange={handleSearchChange}
+          className="w-full p-2 border rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
+        />
+      </div>
+
       <button
         onClick={() => {
           setNewStudent({
@@ -189,58 +215,85 @@ export const StudentsManagement = () => {
           });
           setIsModalOpen(true);
         }}
-        className="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded shadow transition duration-300 my-3"
+        className="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded shadow transition duration-300 mb-6"
       >
         Add Student
       </button>
+
       {isLoading ? (
-        <div className="flex justify-center items-center mt-8">
+        <div className="flex justify-center items-center h-64">
           <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-blue-500"></div>
         </div>
+      ) : filteredStudents.length === 0 ? (
+        <div className="flex flex-col items-center justify-center h-64">
+
+          <p className="text-gray-600 text-lg">No students found.</p>
+        </div>
       ) : (
-        <div className="w-full overflow-x-auto">
-          <table className="w-full border-collapse text-left bg-white rounded-lg overflow-hidden shadow-sm">
-            <thead>
-              <tr className="bg-gray-100">
-                <th className="p-4 font-semibold text-gray-700">Name</th>
-                <th className="p-4 font-semibold text-gray-700">Email</th>
-                <th className="p-4 font-semibold text-gray-700">Exam No</th>
-                <th className="p-4 font-semibold text-gray-700">Department</th>
-                <th className="p-4 font-semibold text-gray-700">Year</th>
-                <th className="p-4 font-semibold text-gray-700">Actions</th>
+        <div className="overflow-x-auto bg-white rounded-lg shadow">
+          <table className="min-w-full">
+            <thead className="bg-gray-100">
+              <tr>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  Name
+                </th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  Email
+                </th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  Exam No
+                </th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  Department
+                </th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  Year
+                </th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  Actions
+                </th>
               </tr>
             </thead>
-            <tbody>
-              {students.map((student) => (
-                <tr
-                  key={student._id}
-                  className=" hover:bg-gray-50 transition duration-200"
-                >
-                  <td className="p-4 text-gray-700">{student.name}</td>
-                  <td className="p-4 text-gray-700">{student.email}</td>
-                  <td className="p-4 text-gray-700">{student.examNo}</td>
-                  <td className="p-4 text-gray-700">{student.department}</td>
-                  <td className="p-4 text-gray-700">{student.year}</td>
-                  <td className="p-4 flex space-x-2">
-                    <button
-                      onClick={() => {
-                        setNewStudent(student);
-                        setStudentToEdit(student);
-                        setIsModalOpen(true);
-                      }}
-                      className="bg-green-500 hover:bg-green-600 text-white px-3 py-1 rounded transition duration-300"
-                    >
-                      Edit
-                    </button>
-                    <button
-                      onClick={() => {
-                        setStudentToDelete(student._id);
-                        setIsDeleteModalOpen(true);
-                      }}
-                      className="bg-red-500 hover:bg-red-600 text-white px-3 py-1 rounded transition duration-300"
-                    >
-                      Delete
-                    </button>
+            <tbody className="divide-y divide-gray-200">
+              {filteredStudents.map((student) => (
+                <tr key={student._id} className="hover:bg-gray-50 transition-colors">
+                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                    {student.name}
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                    {student.email}
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                    {student.examNo}
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                    {student.department}
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                    {student.year}
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap text-sm">
+                    <div className="flex space-x-2">
+                      <button
+                        onClick={() => {
+                          setNewStudent(student);
+                          setStudentToEdit(student);
+                          setIsModalOpen(true);
+                        }}
+                        className="bg-green-500 hover:bg-green-600 text-white px-3 py-1 rounded-md transition-colors"
+                      >
+                        Edit
+                      </button>
+                      <button
+                        onClick={() => {
+                          setStudentToDelete(student._id);
+                          setIsDeleteModalOpen(true);
+                        }}
+                        className="bg-red-500 hover:bg-red-600 text-white px-3 py-1 rounded-md transition-colors"
+                      >
+                        Delete
+                      </button>
+                    </div>
                   </td>
                 </tr>
               ))}
@@ -248,6 +301,8 @@ export const StudentsManagement = () => {
           </table>
         </div>
       )}
+
+      {/* Add/Edit Student Modal */}
       <AnimatePresence>
         {isModalOpen && (
           <motion.div
@@ -288,7 +343,6 @@ export const StudentsManagement = () => {
                 }
                 className="w-full border p-2 mb-2 rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
               />
-
               <input
                 type="text"
                 placeholder="Exam No"
@@ -312,7 +366,6 @@ export const StudentsManagement = () => {
                   </option>
                 ))}
               </select>
-
               <select
                 value={newStudent.year}
                 onChange={(e) =>
@@ -327,7 +380,6 @@ export const StudentsManagement = () => {
                   </option>
                 ))}
               </select>
-
               <button
                 onClick={addOrEditStudent}
                 className="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded w-full transition duration-300"
@@ -344,6 +396,8 @@ export const StudentsManagement = () => {
           </motion.div>
         )}
       </AnimatePresence>
+
+      {/* Delete Confirmation Modal */}
       <AnimatePresence>
         {isDeleteModalOpen && (
           <motion.div

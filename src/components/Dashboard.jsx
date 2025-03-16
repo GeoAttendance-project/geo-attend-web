@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import axios from "axios";
-import { BarChart, Bar, XAxis, YAxis, Tooltip, Legend, PieChart, Pie, Cell } from "recharts";
+import { BarChart, Bar, XAxis, YAxis, Tooltip, Legend, PieChart, Pie, Cell, CartesianGrid } from "recharts";
 const API_URL = import.meta.env.VITE_API_URL;
 
 export const Dashboard = () => {
@@ -26,15 +26,80 @@ export const Dashboard = () => {
     fetchDashboardData();
   }, []);
 
-  if (loading) return <p className="p-5">Loading...</p>;
-  if (error) return <p className="p-5 text-red-500">{error}</p>;
+  if (loading)
+    return (
+      <div className="flex justify-center items-center h-screen">
+        <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-blue-500"></div>
+      </div>
+    );
+
+  if (error)
+    return (
+      <div className="flex justify-center items-center h-screen">
+        <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded">
+          {error}
+        </div>
+      </div>
+    );
 
   // Colors for charts
   const COLORS = ["#0088FE", "#00C49F", "#FFBB28", "#FF8042", "#AF19FF"];
 
+  // Transform studentsByYear object into an array for the BarChart
+  const studentsByYearArray = dashboardData.studentsByYear
+    ? Object.keys(dashboardData.studentsByYear).map((year) => ({
+        _id: year,
+        count: dashboardData.studentsByYear[year],
+      }))
+    : [];
+
+  // Transform studentsByDepartment object into an array for the PieChart
+  const studentsByDepartmentArray = dashboardData.studentsByDepartment
+    ? Object.keys(dashboardData.studentsByDepartment).map((department) => ({
+        name: department,
+        count: dashboardData.studentsByDepartment[department],
+      }))
+    : [];
+
+  // Transform todaysAttendance object into an array for the Grouped Bar Chart
+  const todaysAttendanceArray = dashboardData.todaysAttendance
+    ? Object.keys(dashboardData.todaysAttendance).map((year) => {
+        const yearNumber = year.split("_")[1]; // Extract year number (e.g., "year_2" -> "2")
+        const totalStudents = dashboardData.studentsByYear[year] || 0; // Get total students for the year
+        return {
+          year: yearNumber,
+          morning: dashboardData.todaysAttendance[year].morning,
+          afternoon: dashboardData.todaysAttendance[year].afternoon,
+          totalStudents: totalStudents, // Include total students
+        };
+      })
+    : [];
+
   return (
-    <div className="p-6 w-full">
-      <h1 className="text-3xl font-semibold mb-6 text-gray-800">Dashboard</h1>
+    <div className="p-6 bg-gray-50 min-h-screen">
+      <h1 className="text-3xl font-bold text-gray-800 mb-6">Dashboard</h1>
+
+      {/* Today's Attendance Report Section */}
+      <div className="bg-white p-6 rounded-lg shadow-md mb-8">
+        <h2 className="text-xl font-semibold text-gray-700 mb-4">
+          Today's Attendance Report
+        </h2>
+        <BarChart
+          width={window.innerWidth > 768 ? 800 : 350}
+          height={300}
+          data={todaysAttendanceArray}
+          margin={{ top: 20, right: 30, left: 20, bottom: 5 }}
+        >
+          <CartesianGrid strokeDasharray="3 3" />
+          <XAxis dataKey="year" />
+          <YAxis />
+          <Tooltip />
+          <Legend />
+          <Bar dataKey="morning" fill="#0088FE" name="Morning Attendance" />
+          <Bar dataKey="afternoon" fill="#00C49F" name="Afternoon Attendance" />
+          <Bar dataKey="totalStudents" fill="#FF8042" name="Total Students" />
+        </BarChart>
+      </div>
 
       {/* Grid Layout for Dashboard Cards */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
@@ -64,9 +129,9 @@ export const Dashboard = () => {
             Students by Year
           </h2>
           <ul className="space-y-2">
-            {dashboardData.studentsByYear.map((item) => (
+            {studentsByYearArray.map((item) => (
               <li key={item._id} className="text-gray-700">
-                <span className="font-medium">Year {item._id}:</span>{" "}
+                <span className="font-medium">Year {item._id.split("_")[1]}:</span>{" "}
                 <span className="font-bold text-blue-600">{item.count}</span>{" "}
                 students
               </li>
@@ -83,9 +148,9 @@ export const Dashboard = () => {
             Students Distribution by Year
           </h2>
           <BarChart
-            width={500}
+            width={window.innerWidth > 768 ? 500 : 350}
             height={300}
-            data={dashboardData.studentsByYear}
+            data={studentsByYearArray}
             margin={{ top: 20, right: 30, left: 20, bottom: 5 }}
           >
             <XAxis dataKey="_id" />
@@ -101,9 +166,9 @@ export const Dashboard = () => {
           <h2 className="text-xl font-semibold text-gray-700 mb-4">
             Students Distribution by Department
           </h2>
-          <PieChart width={500} height={300}>
+          <PieChart width={window.innerWidth > 768 ? 500 : 350} height={300}>
             <Pie
-              data={dashboardData.studentsByDepartment}
+              data={studentsByDepartmentArray}
               cx="50%"
               cy="50%"
               outerRadius={100}
@@ -111,7 +176,7 @@ export const Dashboard = () => {
               dataKey="count"
               label
             >
-              {dashboardData.studentsByDepartment.map((entry, index) => (
+              {studentsByDepartmentArray.map((entry, index) => (
                 <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
               ))}
             </Pie>
