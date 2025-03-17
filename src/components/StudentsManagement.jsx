@@ -37,15 +37,18 @@ export const StudentsManagement = () => {
   }, []); // Fetch students on initial load
 
   useEffect(() => {
-    // Filter students based on search query
-    const filtered = students.filter(
-      (student) =>
-        student.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        student.examNo.toLowerCase().includes(searchQuery.toLowerCase())
-    );
+    // Ensure students is defined and is an array
+    if (!Array.isArray(students)) return;
+  
+    const filtered = students.filter((student) => {
+      const name = student?.name?.toLowerCase() || "";
+      const examNo = student?.examNo?.toLowerCase() || "";
+      return name.includes(searchQuery.toLowerCase()) || examNo.includes(searchQuery.toLowerCase());
+    });
+  
     setFilteredStudents(filtered);
-  }, [searchQuery, students]); // Update filteredStudents when searchQuery or students change
-
+  }, [searchQuery, students]);
+  
   const fetchStudents = async () => {
     setIsLoading(true);
     try {
