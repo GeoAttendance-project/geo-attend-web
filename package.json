@@ -12,6 +12,7 @@
   "dependencies": {
     "@tailwindcss/vite": "^4.0.7",
     "axios": "^1.7.9",
+    "file-saver": "^2.0.5",
     "framer-motion": "^12.4.5",
     "lucide-react": "^0.475.0",
     "react": "^19.0.0",
@@ -19,7 +20,8 @@
     "react-leaflet": "^5.0.0",
     "react-router-dom": "^7.2.0",
     "recharts": "^2.15.1",
-    "tailwindcss": "^4.0.7"
+    "tailwindcss": "^4.0.7",
+    "xlsx": "^0.18.5"
   },
   "devDependencies": {
     "@eslint/js": "^9.19.0",

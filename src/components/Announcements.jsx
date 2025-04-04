@@ -1,6 +1,7 @@
 import axios from "axios";
 import { useEffect, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
+
 const API_URL = import.meta.env.VITE_API_URL;
 
 export const Announcements = () => {
@@ -8,8 +9,14 @@ export const Announcements = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
+
   const [title, setTitle] = useState("");
-  const [content, setContent] = useState("");
+  const [description, setDescription] = useState("");
+  const [year, setYear] = useState("");
+  const [department, setDepartment] = useState("");
+  const [attachmentLink, setAttachmentLink] = useState("");
+  const [formError, setFormError] = useState("");
+
   const token = localStorage.getItem("token");
 
   useEffect(() => {
@@ -17,7 +24,9 @@ export const Announcements = () => {
       try {
         const response = await axios.get(
           `${API_URL}/api/v1/admin/announcement`,
-          { headers: { Authorization: `Bearer ${token}` } }
+          {
+            headers: { Authorization: `Bearer ${token}` },
+          }
         );
         if (response.data.status === "success") {
           setAnnouncements(response.data.data);
@@ -30,24 +39,48 @@ export const Announcements = () => {
         setLoading(false);
       }
     };
+
     fetchAnnouncements();
   }, []);
 
   const handlePostAnnouncement = async () => {
+    if (!title || !description || !year || !department) {
+      setFormError("Please fill in all required fields.");
+      return;
+    }
+
     try {
       const response = await axios.post(
         `${API_URL}/api/v1/admin/announcement`,
-        { title, content },
-        { headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json" } }
+        {
+          title,
+          content: description,
+          department,
+          year,
+          attachmentLink: attachmentLink.trim() === "" ? undefined : attachmentLink.trim(),
+        },
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+            "Content-Type": "application/json",
+          },
+        }
       );
+
       if (response.data.status === "success") {
         setAnnouncements([...announcements, response.data.data]);
         setTitle("");
-        setContent("");
+        setDescription("");
+        setYear("");
+        setDepartment("");
+        setAttachmentLink("");
+        setFormError("");
         setIsModalOpen(false);
       }
     } catch (err) {
-      setError(err.message);
+      setFormError(
+        err.response?.data?.message || err.message || "Something went wrong"
+      );
     }
   };
 
@@ -72,7 +105,10 @@ export const Announcements = () => {
       <div className="flex justify-between items-center mb-6">
         <h2 className="text-3xl font-bold text-gray-800">Announcements</h2>
         <button
-          onClick={() => setIsModalOpen(true)}
+          onClick={() => {
+            setFormError("");
+            setIsModalOpen(true);
+          }}
           className="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded-lg shadow-md transition duration-300"
         >
           Post Announcement
@@ -82,30 +118,49 @@ export const Announcements = () => {
       <div className="space-y-4">
         {announcements.length === 0 ? (
           <div className="flex flex-col items-center justify-center h-64">
-            <img
-              src="https://cdn-icons-png.flaticon.com/512/4076/4076388.png"
-              alt="No announcements"
-              className="w-24 h-24 mb-4"
-            />
             <p className="text-gray-600 text-lg">No announcements available.</p>
           </div>
         ) : (
-          announcements.map(({ _id, title, content, createdAt }) => (
-            <div
-              key={_id}
-              className="p-6 bg-white rounded-lg shadow-md hover:shadow-lg transition-shadow duration-300 border-l-4 border-blue-500"
-            >
-              <h3 className="text-xl font-semibold text-gray-800">{title}</h3>
-              <p className="text-gray-600 mt-2">{content}</p>
-              <p className="text-sm text-gray-400 mt-2">
-                {new Date(createdAt).toLocaleString()}
-              </p>
-            </div>
-          ))
+          announcements.map(
+            ({
+              _id,
+              title,
+              description,
+              createdAt,
+              department,
+              year,
+              attachmentLink,
+            }) => (
+              <div
+                key={_id}
+                className="p-6 bg-white rounded-lg shadow-md hover:shadow-lg transition-shadow duration-300 border-l-4 border-blue-500"
+              >
+                <h3 className="text-xl font-semibold text-gray-800">{title}</h3>
+                <p className="text-gray-600 mt-2">{description}</p>
+                <p className="text-sm text-gray-400 mt-1">
+                  Department : {department}
+                </p>
+                <p className="text-sm text-gray-400 mt-1">Year : {year}</p>
+
+                {attachmentLink && (
+                  <button
+                    onClick={() => window.open(attachmentLink, "_blank")}
+                    className="mt-3 bg-blue-100 text-blue-700 px-3 py-1 rounded hover:bg-blue-200 text-sm transition"
+                  >
+                    Preview Attachment
+                  </button>
+                )}
+
+                <p className="text-sm text-gray-400 mt-2">
+                  {new Date(createdAt).toLocaleString()}
+                </p>
+              </div>
+            )
+          )
         )}
       </div>
 
-      {/* Post Announcement Modal */}
+      {/* Modal */}
       <AnimatePresence>
         {isModalOpen && (
           <motion.div
@@ -121,29 +176,70 @@ export const Announcements = () => {
               className="bg-white p-6 rounded-lg shadow-lg w-96"
             >
               <h3 className="text-xl font-semibold mb-4">Post Announcement</h3>
+
+              {formError && (
+                <div className="bg-red-100 text-red-700 border border-red-400 px-3 py-2 rounded mb-3 text-sm">
+                  {formError}
+                </div>
+              )}
+
               <input
                 type="text"
                 placeholder="Title"
                 value={title}
                 onChange={(e) => setTitle(e.target.value)}
-                className="w-full p-2 border rounded mb-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                className="w-full p-2 border rounded mb-2"
               />
               <textarea
-                placeholder="Content"
-                value={content}
-                onChange={(e) => setContent(e.target.value)}
-                className="w-full p-2 border rounded mb-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                placeholder="Description"
+                value={description}
+                onChange={(e) => setDescription(e.target.value)}
+                className="w-full p-2 border rounded mb-2"
               ></textarea>
+
+              <select
+                value={year}
+                onChange={(e) => setYear(e.target.value)}
+                className="w-full p-2 border rounded mb-2"
+              >
+                <option value="">Select Year</option>
+                <option value="ALL">ALL</option>
+                <option value="2">2</option>
+                <option value="3">3</option>
+                <option value="4">4</option>
+              </select>
+
+              <select
+                value={department}
+                onChange={(e) => setDepartment(e.target.value)}
+                className="w-full p-2 border rounded mb-2"
+              >
+                <option value="">Select Department</option>
+                <option value="ALL">ALL</option>
+                <option value="IT">IT</option>
+                <option value="CSE">CSE</option>
+                <option value="ECE">ECE</option>
+                <option value="EEE">EEE</option>
+              </select>
+
+              <input
+                type="url"
+                placeholder="Attachment Link"
+                value={attachmentLink}
+                onChange={(e) => setAttachmentLink(e.target.value)}
+                className="w-full p-2 border rounded mb-4"
+              />
+
               <div className="flex justify-end space-x-2">
                 <button
                   onClick={() => setIsModalOpen(false)}
-                  className="bg-gray-500 hover:bg-gray-600 text-white px-4 py-2 rounded transition duration-300"
+                  className="bg-gray-500 hover:bg-gray-600 text-white px-4 py-2 rounded"
                 >
                   Cancel
                 </button>
                 <button
                   onClick={handlePostAnnouncement}
-                  className="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded transition duration-300"
+                  className="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded"
                 >
                   Post
                 </button>

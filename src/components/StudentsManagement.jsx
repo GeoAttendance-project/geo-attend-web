@@ -1,6 +1,8 @@
 import { useState, useEffect } from "react";
 import axios from "axios";
 import { motion, AnimatePresence } from "framer-motion";
+import { saveAs } from "file-saver";
+import * as XLSX from "xlsx";
 
 const API_URL = import.meta.env.VITE_API_URL;
 
@@ -39,16 +41,19 @@ export const StudentsManagement = () => {
   useEffect(() => {
     // Ensure students is defined and is an array
     if (!Array.isArray(students)) return;
-  
+
     const filtered = students.filter((student) => {
       const name = student?.name?.toLowerCase() || "";
       const examNo = student?.examNo?.toLowerCase() || "";
-      return name.includes(searchQuery.toLowerCase()) || examNo.includes(searchQuery.toLowerCase());
+      return (
+        name.includes(searchQuery.toLowerCase()) ||
+        examNo.includes(searchQuery.toLowerCase())
+      );
     });
-  
+
     setFilteredStudents(filtered);
   }, [searchQuery, students]);
-  
+
   const fetchStudents = async () => {
     setIsLoading(true);
     try {
@@ -68,6 +73,45 @@ export const StudentsManagement = () => {
       setIsLoading(false);
     }
   };
+
+  const handleExport = () => {
+    if (!students || students.length === 0) {
+      alert("No data to export");
+      return;
+    }
+  
+    const worksheetData = [
+      ["CSI College of Engineering"],
+      [`Department of ${filters.department} - Year ${filters.year}`],
+      [],
+      ["Name", "Email", "Exam No", "Department", "Year"],
+      ...students.map((student) => [
+        student.name,
+        student.email,
+        student.examNo,
+        student.department,
+        student.year,
+      ]),
+    ];
+  
+    const worksheet = XLSX.utils.aoa_to_sheet(worksheetData);
+    const workbook = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(workbook, worksheet, "Students");
+  
+    // Generate binary Excel file
+    const excelBuffer = XLSX.write(workbook, {
+      bookType: "xlsx",
+      type: "array",
+    });
+  
+    // Create a blob and trigger download
+    const fileBlob = new Blob([excelBuffer], {
+      type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+    });
+  
+    saveAs(fileBlob, "students.xlsx");
+  };
+  
 
   const handleFilterChange = (e, key) => {
     setFilters({ ...filters, [key]: e.target.value });
@@ -154,7 +198,9 @@ export const StudentsManagement = () => {
 
   return (
     <div className="p-6 bg-gray-50 min-h-screen">
-      <h2 className="text-3xl font-bold text-gray-800 mb-6">Student Management</h2>
+      <h2 className="text-3xl font-bold text-gray-800 mb-6">
+        Student Management
+      </h2>
       {errorMessage && (
         <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded mb-4">
           {errorMessage}
@@ -229,11 +275,16 @@ export const StudentsManagement = () => {
         </div>
       ) : filteredStudents.length === 0 ? (
         <div className="flex flex-col items-center justify-center h-64">
-
           <p className="text-gray-600 text-lg">No students found.</p>
         </div>
       ) : (
         <div className="overflow-x-auto bg-white rounded-lg shadow">
+          <button
+            onClick={handleExport}
+            className="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded shadow transition duration-300 mb-4"
+          >
+            Export to Excel
+          </button>
           <table className="min-w-full">
             <thead className="bg-gray-100">
               <tr>
@@ -259,7 +310,10 @@ export const StudentsManagement = () => {
             </thead>
             <tbody className="divide-y divide-gray-200">
               {filteredStudents.map((student) => (
-                <tr key={student._id} className="hover:bg-gray-50 transition-colors">
+                <tr
+                  key={student._id}
+                  className="hover:bg-gray-50 transition-colors"
+                >
                   <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
                     {student.name}
                   </td>
