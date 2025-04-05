@@ -1,7 +1,5 @@
 import React, { useEffect, useState } from "react";
 import axios from "axios";
-import { MapContainer, TileLayer, Marker } from "react-leaflet";
-import "leaflet/dist/leaflet.css";
 import { motion, AnimatePresence } from "framer-motion";
 
 export const AttendanceLocation = () => {
